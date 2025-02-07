@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+        
+      - name: Set up Python
+        uses: actions/checkout@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Install all requirements including test dependencies
+          pip install -r requirements.txt
+          # Install linting tools
+          pip install pylint
+          # Install Hadolint
+          wget -O hadolint "https://github.com/hadolint/hadolint/releases/download/v2.12.0/hadolint-Linux-x86_64"
+          chmod +x hadolint
+          sudo mv hadolint /usr/local/bin/
+      
+      - name: Run tests with coverage
+        run: |
+          pytest --cov=./ --cov-report=xml
+
+      - name: Lint Python code
+        run: |
+          pylint main.py  || exit 0 
+
+      - name: Lint Dockerfile
+        run: |
+          hadolint Dockerfile || exit 0
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: 'mawlstace/beekeeper-api:latest'
+          format: 'table'
+          exit-code: '0'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+          
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: mawlstace/beekeeper-api:latest,mawlstace/beekeeper-api:${{ github.sha }}
+          cache-from: type=registry,ref=mawlstace/beekeeper-api:buildcache
+          cache-to: type=registry,ref=mawlstace/beekeeper-api:buildcache,mode=max
+
+      - name: Integration Tests
+        run: |
+          docker run -d -p 8000:8000 mawlstace/beekeeper-api:latest
+          sleep 10 # Wait for container startup
+          # check apis 
+          curl -f http://localhost:8000/version
+          curl -f http://localhost:8000/temperature
+          curl -f http://localhost:8000/metrics
+          # Additional API tests
+          pytest integration_tests/
