@@ -1,135 +1,115 @@
-[![Dynamic DevOps Roadmap](https://img.shields.io/badge/Get_Started_Now-559e11?style=for-the-badge&logo=Vercel&logoColor=white)](https://devopsroadmap.io/getting-started/)
-[![Community](https://img.shields.io/badge/Join_Community-%23FF6719?style=for-the-badge&logo=substack&logoColor=white)](https://newsletter.devopsroadmap.io/subscribe)
-[![Telegram Group](https://img.shields.io/badge/Telegram_Group-%232ca5e0?style=for-the-badge&logo=telegram&logoColor=white)](https://t.me/DevOpsHive/985)
-[![License](https://img.shields.io/github/license/DevOpsHiveHQ/dynamic-devops-roadmap?style=for-the-badge&color=ffcb00)](https://github.com/DevOpsHiveHQ/dynamic-devops-roadmap/blob/main/LICENSE)
-[![Status](https://img.shields.io/badge/Status-Ready-ffcb00?style=for-the-badge)](https://devopsroadmap.io/)
+# OpenSenseMap Beekeeping API
 
-<!-- omit from toc -->
-# Dynamic DevOps Roadmap
+A RESTful API service that interfaces with openSenseMap to help beekeepers monitor temperature conditions. This service includes Prometheus metrics for monitoring.
 
-<p align="center">
-  <a href="https://devopsroadmap.io/" style="display: block; padding: .5em 0; text-align: center;">
-    <img alt="Dynamic DevOps Roadmap" border="0" width="90%" src="./static/img/dynamic-devops-roadmap-with-logo.png" />
-  </a>
-</p>
+## Features
 
-<div align="center">
+- Temperature monitoring from openSenseMap sensors
+- Status classification (Too Cold/Good/Too Hot)
+- Prometheus metrics integration
+- Docker support
+- Comprehensive test suite
 
-[🌐 Website](https://devopsroadmap.io/)
-<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-[✉️ Community](https://newsletter.devopsroadmap.io/subscribe)
-<span>&nbsp;&nbsp;•&nbsp;&nbsp;</span>
-[💬 Telegram](https://t.me/DevOpsHive/985)
+## Prerequisites
 
-</div>
+- Python 3.9+
+- Docker (optional)
+- virtualenv (recommended)
 
-[Dynamic DevOps Roadmap](https://devopsroadmap.io/) is a **FREE** pragmatic DevOps learning to kickstart your DevOps career in the Cloud Native era following the Agile MVP style!
+## Installation
 
-> Experience-Driven DevOps: Beyond Tools, Where Concepts Meet Real-World Challenges
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd beekeeping-api
+```
 
-Unlike many other roadmaps, this roadmap is **effective**, **impactful**, and most importantly **feasible** because it takes a different approach following 3 principles:
+2. Create and activate virtual environment:
+```bash
+# Create virtual environment
+python3 -m venv .venv
 
-- `Progressive`: MVP-style learning path works in phases.
-- `Non-Linear`: Faster and more solid growth in less time.
-- `T-Shaped`: Depth in expertise, breadth in knowledge.
+# Activate virtual environment
+# On Linux/macOS:
+source .venv/bin/activate
+# On Windows:
+.venv\Scripts\activate
+```
 
-<!-- omit from toc -->
-## Give it a Star! ⭐
+3. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-If you like this project, please [give it a star](#top) on GitHub for better visibility. Thanks!
+## Running the Application
 
-</br>
-<p align="center">
-  <a href="https://devopsroadmap.io/getting-started/" imageanchor="1">
-    <img src="https://img.shields.io/badge/Get_Started_Now-559e11?style=for-the-badge&logo=Vercel&logoColor=white" />
-  </a>
-</p>
+### Running Locally
 
-<!-- omit from toc -->
-## Table of Contents
+1. Start the application:
+```bash
+python main.py
+```
 
-- [Before you start](#before-you-start)
-- [The Problem](#the-problem)
-- [The Solution](#the-solution)
-- [The Roadmap](#the-roadmap)
-- [Star History](#star-history)
-- [License](#license)
+2. Access the API at `http://localhost:8000`
 
-## Before you start
+### Running with Docker
 
-Here is a pre-start checklist:
+1. Build the Docker image:
+```bash
+docker build -t beekeeping-api .
+```
 
-- ⭐ <a target="_blank" href="#top">Star the project repo</a> on GitHub for better visibility.
-- ✉️ <a target="_blank" href="https://newsletter.devopsroadmap.io/subscribe">Join the community</a> for the project community activities, which include mentorship, job posting, online meetings, workshops, career tips and tricks, and more.
-- 🌐 <a target="_blank" href="https://t.me/DevOpsHive/985">Join the Telegram group</a> for interactive communication.
+2. Run the container:
+```bash
+docker run -p 8000:8000 beekeeping-api
+```
 
-## The Problem
+## API Endpoints
 
-<p align="center">
-  <img alt="Cloud Native Landscape" border="0" width="90%" src="static/img/cloud-native-landscape-cropped.png" />
-  <br/>
-  A subset of the Cloud Native landscape (<a target="_blank" href="https://landscape.cncf.io/" imageanchor="1">check the full CNCF landscape</a>)
-</p>
+- `GET /`: API information
+- `GET /version`: Current API version
+- `GET /temperature`: Current temperature data
+- `GET /metrics`: Prometheus metrics
 
-<a href="static/img/devops-roadmap-linear.png" imageanchor="1">
-  <img alt="Linear DevOps roadmap is broken by default" align="right" width="30%" src="static/img/devops-roadmap-linear.png" />
-</a>
+## Running Tests
 
-The `DevOps Engineer` role remains one of the top 10 most in-demand jobs across all industries (not just the tech field!). However, starting that role is super challenging because the DevOps model has various patterns and topologies. Also, the Cloud Native landscape keeps expanding, and there is something new every day!
+1. Ensure you're in the virtual environment
+2. Run the tests:
+```bash
+# Run all tests
+pytest test_app.py -v
 
-Simply, **you cannot start a DevOps position by merely learning the tools!** It's even more complicated if that's your first job without previous software industry experience (coming from either Dev or Ops). Also following `linear` roadmaps like [roadmap.sh/devops](https://roadmap.sh/devops) cannot help to land your first job and probably will struggle a lot when you find one!
+# Run tests with coverage report
+pytest --cov=main test_app.py
 
-For more details about the problem aspects, please read: [What is the problem this roadmap is trying to solve](https://devopsroadmap.io/faq/)
+# Generate HTML coverage report
+pytest --cov=main test_app.py --cov-report=html
+```
 
+## Configuration
 
-## The Solution
+The application uses the following environment variables:
+- `TARGET_ID`: SenseBox ID for temperature monitoring (default: "5eba5fbad46fb8001b799786")
+- `APP_VERSION`: Application version (default: "0.0.1")
 
-<p align="center">
-  <a href="https://devopsroadmap.io/getting-started/" imageanchor="1">
-    <img alt="Dynamic MVP-style roadmap Good and Bad" border="0" width="90%" src="static/img/dynamic-devops-roadmap-pillars.png" />
-  </a>
-</p>
+## Development
 
-This roadmap following 3 principles:
+1. Update dependencies:
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
 
-- `Progressive`: MVP-style learning path works in phases.
-- `Non-Linear`: Faster and more solid growth in less time.
-- `T-Shaped`: Depth in expertise, breadth in knowledge.
+2. Run tests before committing changes:
+```bash
+pytest test_app.py -v
+```
 
-That means **first, understanding the problem instead of just learning a bunch of tools** and then **using an iterative style, each iteration will cover most DevOps areas used in the job** to build a T-shaped skills profile from day one!
+## Contributing
 
-For more details, check the next section.
+1. Fork the repository
+2. Create your feature branch
+3. Make your changes
+4. Run the tests
+5. Submit a pull request
 
-## The Roadmap
-
-This roadmap is `polymorphic`, which means it's designed to work in different modes. It depends on how fast you want to go (roadmap, mentorship, or bootcamp).
-
----
-
-<p align="center">
-  <a href="https://devopsroadmap.io/getting-started/" imageanchor="1">
-    <img src="https://img.shields.io/badge/Get_Started_Now-559e11?style=for-the-badge&logo=Vercel&logoColor=white" />
-  </a>
-</p>
-
----
-
-<p align="center">
-  <a href="https://devopsroadmap.io/getting-started/" imageanchor="1">
-    <img title="Dynamic DevOps Roadmap" alt="Dynamic DevOps Roadmap Modules" border="0" width="90%" src="static/img/dynamic-devops-roadmap-modules.png" />
-  </a>
-</p>
-
-
-## Star History
-
-<p align="center">
-  <a href="https://star-history.com/#DevOpsHiveHQ/dynamic-devops-roadmap&Date" imageanchor="1">
-    <img alt="Star History Chart" border="0" width="90%" src="https://api.star-history.com/svg?repos=DevOpsHiveHQ/dynamic-devops-roadmap&type=Date" />
-  </a>
-</p>
-
-
-## License
-
-Dynamic DevOps Roadmap by [DevOps Hive](https://devopshive.net/) and under the open-source license, [Creative Commons Attribution-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/). For more details, please review [LICENSE](LICENSE).

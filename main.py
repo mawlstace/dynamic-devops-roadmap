@@ -8,7 +8,7 @@ Author: [Your Name]
 Version: 0.0.1
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import sys
 from typing import Dict, Union, Optional
 import logging
@@ -65,7 +65,7 @@ def get_temperature_status(temperature: float) -> str:
     Returns:
         str: Status description ("Too Cold", "Good", or "Too Hot")
     """
-    if temperature < TEMPERATURE_THRESHOLDS["cold"]:
+    if temperature <= TEMPERATURE_THRESHOLDS["cold"]:
         return "Too Cold"
     elif temperature <= TEMPERATURE_THRESHOLDS["hot"]:
         return "Good"
@@ -116,43 +116,50 @@ def temperature() -> Union[Response, str]:
     Returns:
         Union[Response, str]: JSON response with temperature data or error message
     """
-    data = fetch_sensor_data(TARGET_ID)
-    if not data:
-        return "Error fetching sensor data", 503
+    try:
+        data = fetch_sensor_data(TARGET_ID)
+        if not data:
+            return "Error fetching sensor data", 503
 
-    for sensor in data.get("sensors", []):
-        if sensor["title"] == "Temperatur":
-            measurement = sensor.get("lastMeasurement", {})
-            if not measurement:
-                return "No temperature measurements available", 404
+        for sensor in data.get("sensors", []):
+            if sensor["title"] == "Temperatur":
+                measurement = sensor.get("lastMeasurement", {})
+                if not measurement:
+                    return "No temperature measurements available", 404
 
-            temp_value = measurement.get("value")
-            timestamp = measurement.get("createdAt")
-            
-            if not all([temp_value, timestamp]):
-                return "Invalid measurement data", 500
-
-            # Parse and validate timestamp
-            try:
-                measurement_time = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%fZ")
-                if datetime.utcnow() - measurement_time > timedelta(hours=1):
-                    return "Data exceeds 1 hour threshold", 404
+                temp_value = measurement.get("value")
+                timestamp = measurement.get("createdAt")
                 
-                # Update metrics
-                temp_float = float(temp_value)
-                request_count.inc()
-                last_temperature.set(temp_float)
-                
-                return jsonify({
-                    "temperature": temp_value,
-                    "status": get_temperature_status(temp_float),
-                    "timestamp": timestamp
-                })
-            except ValueError as e:
-                logger.error(f"Error parsing timestamp: {e}")
-                return "Invalid timestamp format", 500
+                if not all([temp_value, timestamp]):
+                    return "Invalid measurement data", 500
 
-    return "Temperature sensor not found", 404
+                # Parse and validate timestamp
+                try:
+                    # Make the parsed datetime timezone-aware
+                    measurement_time = datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S.%fZ")
+                    measurement_time = measurement_time.replace(tzinfo=timezone.utc)
+                    
+                    if datetime.now(timezone.utc) - measurement_time > timedelta(hours=1):
+                        return "Data exceeds 1 hour threshold", 404
+                    
+                    # Update metrics
+                    temp_float = float(temp_value)
+                    request_count.inc()
+                    last_temperature.set(temp_float)
+                    
+                    return jsonify({
+                        "temperature": temp_value,
+                        "status": get_temperature_status(temp_float),
+                        "timestamp": timestamp
+                    })
+                except ValueError as e:
+                    logger.error(f"Error parsing timestamp: {e}")
+                    return "Invalid timestamp format", 500
+
+        return "Temperature sensor not found", 404
+    except Exception as e:
+        logger.error(f"Unexpected error in temperature endpoint: {e}")
+        return "Internal server error", 500
 
 # Add metrics endpoint using middleware
 app.wsgi_app = DispatcherMiddleware(app.wsgi_app, {
