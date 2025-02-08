@@ -43,7 +43,7 @@ jobs:
       
       - name: Run tests with coverage
         run: |
-          pytest --cov=./ --cov-report=xml
+          python -m pytest test_app.py --cov=app --cov-report=xml
 
       - name: Lint Python code
         run: |
@@ -83,10 +83,16 @@ jobs:
       - name: Integration Tests
         run: |
           docker run -d -p 8000:8000 mawlstace/beekeeper-api:latest
-          sleep 10 # Wait for container startup
+          sleep 5 # Wait for container startup
           # check apis 
           curl -f http://localhost:8000/version
           curl -f http://localhost:8000/temperature
           curl -f http://localhost:8000/metrics
           # Additional API tests
           pytest integration_tests/
+          
+      - name: Run integration tests
+        continue-on-error: true
+        run: |
+          # Run only integration tests
+          python -m pytest integration_tests/ -v
