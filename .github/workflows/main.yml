@@ -9,12 +9,25 @@ on:
       - develop
 
 jobs:
+  semgrep:
+    name: semgrep/ci
+    runs-on: ubuntu-latest
+    env:
+      SEMGREP_APP_TOKEN: ${{ secrets.SEMGREP_APP_TOKEN }}
+    container:
+      image: semgrep/semgrep
+    if: (github.actor != 'dependabot[bot]')
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep ci
+
   build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-
+      security-events: write
+      actions: read
     
     steps:
       - name: Checkout code
@@ -53,6 +66,19 @@ jobs:
         run: |
           hadolint Dockerfile || exit 0
 
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        with:
+          args:
+            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.qualitygate.wait=false
+          
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
         with:
@@ -62,6 +88,17 @@ jobs:
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+
+
+      - name: Run Terrascan
+        uses: tenable/terrascan-action@main
+        with:
+          iac_type: 'k8s'
+          iac_version: 'v1'
+          policy_type: 'k8s'
+          only_warn: true
+          sarif_upload: true
+          scan_path: '.'
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -85,12 +122,12 @@ jobs:
           docker run -d -p 8000:8000 mawlstace/beekeeper-api:latest
           sleep 5 # Wait for container startup
           # check apis 
-          curl -f http://localhost:8000/version
-          curl -f http://localhost:8000/temperature
-          curl -f http://localhost:8000/metrics
+              curl -f http://localhost:8000/version
+              curl -f http://localhost:8000/temperature
+              curl -f http://localhost:8000/metrics
           # Additional API tests
           pytest integration_tests/
-          
+
       - name: Run integration tests
         continue-on-error: true
         run: |
