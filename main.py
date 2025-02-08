@@ -104,9 +104,9 @@ def index() -> Response:
     })
 
 @app.route("/version")
-def version() -> str:
+def version() -> Response:
     """Return the current API version."""
-    return APP_VERSION
+    return Response(APP_VERSION, mimetype='text/plain')
 
 @app.route("/temperature")
 def temperature() -> Union[Response, str]:
