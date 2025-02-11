@@ -78,6 +78,18 @@ jobs:
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.qualitygate.wait=false
+      - name: Wait for Quality Gate
+        run: |
+          sleep 5  # Give SonarQube time to process
+          response=$(curl -s -u ${{ secrets.SONAR_TOKEN }}: ${{ secrets.SONAR_HOST_URL }}/api/qualitygates/project_status?projectKey=${{ secrets.SONAR_PROJECT_KEY }})
+          status=$(echo $response | jq -r .projectStatus.status)
+          echo "Quality Gate Status: $status"
+          
+          if [ "$status" = "ERROR" ]; then
+            echo "Quality Gate failed"
+            echo "Details: $response"
+            exit 1
+          fi
           
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
