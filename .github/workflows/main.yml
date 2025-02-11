@@ -56,7 +56,7 @@ jobs:
       
       - name: Run tests with coverage
         run: |
-          python -m pytest test_app.py --cov=app --cov-report=xml
+          python -m pytest test_app.py --cov=. --cov-report=xml 
 
       - name: Lint Python code
         run: |
@@ -74,10 +74,16 @@ jobs:
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
         with:
           args:
+
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORGANIZATION }}
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.qualitygate.wait=false
+            # Setting qualitygate.wait=false because free tier only allows main branch analysis
+            # Example API response for non-main branches:
+            # curl -s -u ${SONAR_TOKEN}: "https://sonarcloud.io/api/qualitygates/project_status?projectKey=project_key&branch=develop"
+            # {"errors":[{"msg":"Organization is not allowed to access data from non main branches."}]}
+            
       - name: Wait for Quality Gate
         run: |
           sleep 5  # Give SonarQube time to process
@@ -90,6 +96,7 @@ jobs:
             echo "Details: $response"
             exit 1
           fi
+        # the Qaulity Gate status is None as it is not available for non-main branches. 
           
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
