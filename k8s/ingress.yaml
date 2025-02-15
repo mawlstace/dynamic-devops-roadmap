@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: beekeeper-ingress
+  namespace: beekeeper
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    #Add SSL redirect if you want HTTPS
+    #nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  rules:
+  - host: beekeeper.example.com  # Replace with your actual domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: beekeeper-service
+            port:
+              number: 80
