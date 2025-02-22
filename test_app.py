@@ -4,12 +4,24 @@ Unit Tests for OpenSenseMap Beekeeping API
 import json
 from datetime import datetime, timezone, timedelta
 from unittest.mock import patch, MagicMock
-
 import pytest
 import requests
 from flask import Flask
+from main import app, get_temperature_status, redis_client, minio_client
 
-from main import app, get_temperature_status
+# Mock Redis and MinIO clients
+@pytest.fixture(autouse=True)
+def mock_redis():
+    """Mock Redis client for testing."""
+    with patch('main.redis_client') as mock:
+        mock.get.return_value = None
+        yield mock
+
+@pytest.fixture(autouse=True)
+def mock_minio():
+    """Mock MinIO client for testing."""
+    with patch('main.minio_client') as mock:
+        yield mock
 
 @pytest.fixture
 def client():
@@ -51,7 +63,7 @@ def test_version_endpoint(client):
     """Test the version endpoint returns correct version string."""
     response = client.get('/version')
     assert response.status_code == 200
-    assert response.data.decode('utf-8') == "0.0.1"
+    assert response.data.decode('utf-8') == "0.0.2"  # Updated version number
 
 @pytest.mark.parametrize("temperature,expected_status", [
     (5, "Too Cold"),
@@ -68,11 +80,10 @@ def test_get_temperature_status(temperature, expected_status):
 @patch('requests.get')
 def test_temperature_endpoint_success(mock_get, client, mock_sensor_data):
     """Test successful temperature endpoint response."""
-    # Configure mock
     mock_response = MagicMock()
     mock_response.json.return_value = mock_sensor_data
     mock_get.return_value = mock_response
-
+    
     response = client.get('/temperature')
     assert response.status_code == 200
     data = json.loads(response.data)
@@ -83,7 +94,6 @@ def test_temperature_endpoint_success(mock_get, client, mock_sensor_data):
 @patch('requests.get')
 def test_temperature_endpoint_old_data(mock_get, client, mock_sensor_data):
     """Test temperature endpoint with outdated sensor data."""
-    # Set timestamp to 2 hours ago
     old_time = datetime.now(timezone.utc) - timedelta(hours=2)
     mock_sensor_data["sensors"][0]["lastMeasurement"]["createdAt"] = \
         old_time.strftime("%Y-%m-%dT%H:%M:%S.%fZ")
@@ -91,7 +101,7 @@ def test_temperature_endpoint_old_data(mock_get, client, mock_sensor_data):
     mock_response = MagicMock()
     mock_response.json.return_value = mock_sensor_data
     mock_get.return_value = mock_response
-
+    
     response = client.get('/temperature')
     assert response.status_code == 404
     assert b"Data exceeds 1 hour threshold" in response.data
@@ -118,7 +128,7 @@ def test_temperature_endpoint_missing_sensor(mock_get, client):
     mock_response = MagicMock()
     mock_response.json.return_value = {"sensors": []}
     mock_get.return_value = mock_response
-
+    
     response = client.get('/temperature')
     assert response.status_code == 404
     assert b"Temperature sensor not found" in response.data
@@ -134,7 +144,7 @@ def test_temperature_endpoint_invalid_data(mock_get, client):
         }]
     }
     mock_get.return_value = mock_response
-
+    
     response = client.get('/temperature')
     assert response.status_code == 404
     assert b"No temperature measurements available" in response.data

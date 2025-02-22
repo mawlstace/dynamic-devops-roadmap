@@ -1,0 +1,20 @@
+beekeeper:
+  beekeeper:
+    image:
+      repository: mawlstace/beekeeper-api
+      tag: latest
+    imagePullPolicy: IfNotPresent
+    resources:
+      limits:
+        cpu: 500m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  replicas: 2
+kubernetesClusterDomain: cluster.local
+service:
+  ports:
+  - port: 80
+    targetPort: 8000
+  type: ClusterIP
