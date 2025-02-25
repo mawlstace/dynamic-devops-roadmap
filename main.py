@@ -45,8 +45,8 @@ REDIS_PORT = 6379
 CACHE_TTL = 300  # Cache TTL in seconds (5 minutes)
 
 # MinIO Configuration
-MINIO_ENDPOINT = "minio:9000"
-MINIO_ACCESS_KEY = "minioadmin"
+MINIO_ENDPOINT = "localhost:9000"
+MINIO_ACCESS_KEY = "minioadmin" # will change it later to github secrets 
 MINIO_SECRET_KEY = "minioadmin"
 MINIO_BUCKET = "temperature-data"
 MINIO_SECURE = False

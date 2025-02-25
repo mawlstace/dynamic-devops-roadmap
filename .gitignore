@@ -23,3 +23,4 @@ yarn-error.log*
 .venv/
 __pycache__/
 env/
+k8s/kind-config.yaml
