@@ -138,13 +138,15 @@ jobs:
       - name: Integration Tests
         run: |
           docker run -d -p 8000:8000 mawlstace/beekeeper-api:latest
-          sleep 5 # Wait for container startup
+          echo "Waiting for container to start..."
+          sleep 10    
+          docker ps -a 
           # check apis 
               curl -f http://localhost:8000/version
               curl -f http://localhost:8000/temperature
               curl -f http://localhost:8000/metrics
-          # Additional API tests
-          pytest integration_tests/
+          # # Additional API tests
+          # pytest integration_tests/
 
       - name: Run integration tests
         continue-on-error: true
