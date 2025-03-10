@@ -1,0 +1,5 @@
+# Create a virtual environment
+python3 -m venv devops
+
+# Activate the virtual environment
+source devops/bin/activate

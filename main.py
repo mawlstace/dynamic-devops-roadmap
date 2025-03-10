@@ -5,6 +5,7 @@ import logging
 import json
 from apscheduler.schedulers.background import BackgroundScheduler
 from io import BytesIO
+import os
 
 
 
@@ -40,12 +41,12 @@ TEMPERATURE_THRESHOLDS = {
 }
 
 # Redis Configuration
-REDIS_HOST = "redis"
-REDIS_PORT = 6379
+REDIS_HOST = os.environ.get("REDIS_HOST", "localhost")
+REDIS_PORT = int(os.environ.get("REDIS_PORT", 6379))
 CACHE_TTL = 300  # Cache TTL in seconds (5 minutes)
 
 # MinIO Configuration
-MINIO_ENDPOINT = "localhost:9000"
+MINIO_ENDPOINT = os.environ.get("MINIO_ENDPOINT", "localhost:9000")
 MINIO_ACCESS_KEY = "minioadmin" # will change it later to github secrets 
 MINIO_SECRET_KEY = "minioadmin"
 MINIO_BUCKET = "temperature-data"
@@ -367,7 +368,7 @@ def main():
     )
     scheduler.start()
     
-    app.run(host='0.0.0.0', port=8000, debug=False)
+    app.run(host='0.0.0.0', port=8000, debug=True)
 
 if __name__ == "__main__":
     main()
