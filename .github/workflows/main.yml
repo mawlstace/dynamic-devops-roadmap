@@ -147,27 +147,51 @@ jobs:
           push: true
           tags: mawlstace/beekeeper-api:latest,mawlstace/beekeeper-api:${{ github.sha }}
           cache-from: type=registry,ref=mawlstace/beekeeper-api:buildcache
-          cache-to: type=registry,ref=mawlstace/beekeeper-api:buildcache,mode=max      
+          cache-to: type=registry,ref=mawlstace/beekeeper-api:buildcache,mode=max     
+
+      - name: Create Docker network
+        run: docker network create app-network
+
+      - name: Start Redis
+        run: |
+          docker run -d --name redis \
+            --network app-network \
+            -p 6379:6379 \
+            redis:7-alpine
+          sleep 5
+          docker exec redis redis-cli ping || exit 1
+
       - name: Start MinIO
         run: |
           docker run -d --name minio \
+            --network app-network \
             -p 9000:9000 -p 9001:9001 \
             -e MINIO_ROOT_USER=minioadmin \
             -e MINIO_ROOT_PASSWORD=minioadmin \
             minio/minio server /data --console-address ":9001"
-          echo "Waiting for MinIO to start..."
           sleep 10
-          curl -f http://localhost:9000/minio/health/live || exit 1
+
       - name: Integration Tests
         run: |
-          docker run -d -p 8000:8000 mawlstace/beekeeper-api:latest
+          docker run --name test -d \
+            --network app-network \
+            -p 8000:8000 \
+            -e REDIS_HOST=redis \
+            -e REDIS_PORT=6379 \
+            -e MINIO_ENDPOINT=minio:9000 \
+            -e MINIO_ACCESS_KEY=minioadmin \
+            -e MINIO_SECRET_KEY=minioadmin \
+            mawlstace/beekeeper-api:latest
+          
+          docker logs test
           echo "Waiting for container to start..."
-          sleep 10    
-          docker ps -a 
-          # check apis 
-              curl -f http://localhost:8000/version
-              curl -f http://localhost:8000/temperature
-              curl -f http://localhost:8000/metrics
+          sleep 10
+          
+          docker ps -a
+          # check apis
+          curl -f http://localhost:8000/version
+          curl -f http://localhost:8000/temperature
+          curl -f http://localhost:8000/metrics
       - name: Run integration tests
         continue-on-error: true
         run: |

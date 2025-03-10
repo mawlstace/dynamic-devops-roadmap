@@ -4,8 +4,12 @@ FROM python:3.9-slim
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PIP_NO_CACHE_DIR=1
-
+    PIP_NO_CACHE_DIR=1 \
+    REDIS_HOST=localhost \
+    REDIS_PORT=6379 \
+    MINIO_ENDPOINT=localhost:9000 \
+    MINIO_ACCESS_KEY=minioadmin \
+    MINIO_SECRET_KEY=minioadmin
 # Create non-root user
 RUN useradd -m -r appuser
 
