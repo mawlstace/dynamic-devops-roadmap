@@ -183,10 +183,8 @@ jobs:
             -e MINIO_SECRET_KEY=minioadmin \
             mawlstace/beekeeper-api:latest
           
-          docker logs test
           echo "Waiting for container to start..."
-          sleep 10
-          
+          sleep 10          
           docker ps -a
           # check apis
           curl -f http://localhost:8000/version

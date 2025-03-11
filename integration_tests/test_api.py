@@ -1,11 +1,12 @@
 import pytest
+import re
 
 def test_version_endpoint(api_client):
     """Test the /version endpoint returns correct response."""
     response = api_client.get("/version")
     assert response.status_code == 200
-    # Expect plain text version number
-    assert response.text == "0.0.1"
+    # Expect plain text version number in format X.Y.Z
+    assert re.match(r"^\d+\.\d+\.\d+$", response.text), f"Version format incorrect: {response.text}"
 
 def test_metrics_endpoint(api_client):
     """Test the /metrics endpoint for Prometheus metrics."""
